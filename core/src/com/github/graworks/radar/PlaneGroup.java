@@ -10,16 +10,28 @@ public class PlaneGroup {
     private final List<Plane> planes = new ArrayList<>();
 
     public PlaneGroup(int size, int totalPositions) {
-        ArrayList<Integer> randomPositions = new ArrayList<>();
-        while (randomPositions.size() < size) {
+        ArrayList<Integer> randomPositionsGreens = new ArrayList<>();
+        ArrayList<Integer> randomPositionsReds = new ArrayList<>();
+        int halfSize = size / 2;
+        while (randomPositionsGreens.size() < halfSize) {
             int a = MathUtils.random(0, totalPositions - 1);
-            if (!randomPositions.contains(a)) {
-                randomPositions.add(a);
+            if (!randomPositionsGreens.contains(a)) {
+                randomPositionsGreens.add(a);
             }
         }
-        for (int i = 0; i < size; i++) {
-            planes.add(new Plane(randomPositions.get(i), MathUtils.random(0, 1)));
+
+        while (randomPositionsReds.size() < halfSize) {
+            int a = MathUtils.random(0, totalPositions - 1);
+            if (!randomPositionsReds.contains(a) && !randomPositionsGreens.contains(a)) {
+                randomPositionsReds.add(a);
+            }
         }
+        for (int i = 0; i < halfSize; i++) {
+            planes.add(new Plane(randomPositionsGreens.get(i), 0));
+            planes.add(new Plane(randomPositionsReds.get(i), 1));
+        }
+
+        System.out.println(3);
     }
     public List<Plane> getPlanes() {
         return planes;

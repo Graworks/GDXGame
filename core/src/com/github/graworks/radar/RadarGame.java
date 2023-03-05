@@ -3,32 +3,40 @@ package com.github.graworks.radar;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.TimeUtils;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.github.graworks.radar.utils.FontGenerator;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+
+import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public class RadarGame extends ApplicationAdapter {
-
-    ShapeRenderer shapeRenderer;
 
     private SpriteBatch batch;
     private Texture redPlaneImage;
     private Texture greenPlaneImage;
     private Texture explosionImage;
+    private Texture soundOnImage;
+    private Texture soundOffImage;
+
     private Sound shotSound;
-    private BitmapFont font;
+    private BitmapFont regularFont;
     private BitmapFont smallFont;
+    private BitmapFont headerFont;
 
     private final List<ArrayList<PlanePosition>> ringPositionArrays = new ArrayList<>();
     private int circleRadius;
@@ -48,20 +56,26 @@ public class RadarGame extends ApplicationAdapter {
     private List<Integer> angles;
 
 
+    private boolean soundOn = true;
+
+    private I18NBundle langBundle;
+
     @Override
     public void create () {
-        shapeRenderer = new ShapeRenderer();
 
         greenPlaneImage = new Texture("green_plane.png");
         redPlaneImage = new Texture("red_plane.png");
         explosionImage = new Texture("explosion.png");
         shotSound = Gdx.audio.newSound(Gdx.files.internal("shot.wav"));
+        soundOnImage = new Texture("sound_on.png");
+        soundOffImage = new Texture("sound_off.png");
+
         batch = new SpriteBatch();
 
         screenCenterX = Gdx.graphics.getWidth() / 2;
         screenCenterY = Gdx.graphics.getHeight() / 2;
-        circleRadius = (screenCenterX > screenCenterY) ? screenCenterY - Config.MARGIN :
-                                        screenCenterX - Config.MARGIN;
+        circleRadius = (screenCenterX > screenCenterY) ? screenCenterY - Config.CIRCLE_MARGIN :
+                                        screenCenterX - Config.CIRCLE_MARGIN;
         ringWidth = circleRadius / Config.CIRCLES_NUMBER;
 
         planeRadius = Math.round(ringWidth * (float) Math.sin(Math.toRadians(Config.DELTA_ANGLE)) );
@@ -77,137 +91,79 @@ public class RadarGame extends ApplicationAdapter {
             currentAngle += Config.DELTA_ANGLE;
         }
 
-        int distanceFromCenter = 0;
-        for (int i = 0; i < Config.CIRCLES_NUMBER; i++) {
-            distanceFromCenter = ringWidth * i + ringWidth / 2;
-            ArrayList<PlanePosition> planePositions = new ArrayList<>();
-            for (int j = 0; j < angles.size(); j++) {
-                float planeXPos = screenCenterX +
-                                    distanceFromCenter * (float) Math.cos(Math.toRadians(angles.get(j)));
-                float planeYPos = screenCenterY +
-                                    distanceFromCenter * (float) Math.sin(Math.toRadians(angles.get(j)));
-                planePositions.add(new PlanePosition(planeXPos, planeYPos));
-            }
-            ringPositionArrays.add(planePositions);
-        }
-        Collections.reverse(ringPositionArrays);
-
-        font = new BitmapFont();
-        font.setColor(Color.WHITE);
-        font.getData().setScale(3);
-        smallFont = new BitmapFont();
-        smallFont.setColor(new Color(0.7f, 0.7f, 0.7f, 1.0f));
-        smallFont.getData().setScale(2f);
+        prepareRingPositionArrays();
+        prepareFonts();
 
         justLaunched = true;
         gameOver = false;
 
+        FileHandle internal = Gdx.files.internal("i18n/lang");
+        langBundle = I18NBundle.createBundle(internal, Locale.getDefault());
     }
 
     @Override
     public void render () {
-
         Gdx.gl.glClearColor(.25f, .25f, .25f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(0, 1, 0, 1);
-        int currentRadius = circleRadius;
-        for (int i = 0; i < Config.CIRCLES_NUMBER; i++) {
-            shapeRenderer.circle((float) screenCenterX, (float) screenCenterY, currentRadius);
-            currentRadius -= ringWidth;
-        }
-        shapeRenderer.end();
-
         if(!gameOver && !justLaunched) {
-
             if (Gdx.input.isTouched()) {
-
-                int inputXPos = Gdx.input.getX();
-                int inputYPos = Gdx.graphics.getHeight() - Gdx.input.getY();
-                rect.setPosition(inputXPos, inputYPos);
-                boolean hitFound = false;
-
-                for (int i = currentGroupIndex; i < planeGroups.size(); i++) {
-                    PlaneGroup planeGroup = planeGroups.get(i);
-                    int level = planeGroup.getLevel();
-                    List<Plane> planes = planeGroup.getPlanes();
-                    for (int j = 0; j < planes.size(); j++) {
-                        Plane plane = planes.get(j);
-                        float planeXPos = ringPositionArrays.get(level).get(plane.getAnglePositionIndex()).getxPos();
-                        float planeYPos = ringPositionArrays.get(level).get(plane.getAnglePositionIndex()).getyPos();
-                        Rectangle planeRect = new Rectangle(planeXPos - planeRadius,
-                                                            planeYPos - planeRadius,
-                                                         2 * planeRadius,
-                                                        2 * planeRadius);
-
-                        if (planeRect.overlaps(rect)) {
-                            planes.remove(j);
-                            plane.setExplosionTime(TimeUtils.nanoTime());
-                            plane.setCurrentXPos(planeXPos);
-                            plane.setCurrentYPos(planeYPos);
-                            explodedPlanes.add(plane);
-                            shotSound.play();
-                            if (plane.getType() == 1) {
-                                score--;
-                            } else {
-                                score++;
-                            }
-
-                            hitFound = true;
-                            break;
-                        }
-                    }
-                    if (hitFound) break;
-                }
+                handleScreenTouch();
             }
-
             if (TimeUtils.timeSinceNanos(startTime) > deltaTime) {
                 deltaTime -= Config.ACCEL_TIME;
-                for (int i = currentGroupIndex; i < planeGroups.size(); i++) {
-                    PlaneGroup planeGroup = planeGroups.get(i);
-                    int currentGroupLevel = planeGroup.getLevel();
-                    if (currentGroupLevel < ringPositionArrays.size() - 1) {
-                        planeGroup.setLevel(currentGroupLevel + 1);
-                    } else {
-                        planeGroup.getPlanes().clear();
-                        if (i == 0) {
-                            gameOver = true;
-                        }
-                    }
-                }
+                recalculatePlaneGroups();
                 startTime = TimeUtils.nanoTime();
                 currentGroupIndex--;
                 if (currentGroupIndex < 0) {
                     currentGroupIndex = 0;
                 }
             }
-
         }
+
+        ShapeDrawer shapeDrawer = new ShapeDrawer(
+                batch,
+                new TextureRegion(
+                        new Texture(Gdx.files.internal("white_pixel.png")),
+                        1, 1, 1, 1
+                ));
 
         batch.begin();
 
+        Texture soundImage = (soundOn) ? soundOnImage : soundOffImage;
+        batch.draw(soundImage,
+                Gdx.graphics.getWidth() - Config.SCREEN_BORDER * 2,
+                Gdx.graphics.getHeight() - Config.SCREEN_BORDER * 2,
+                   Config.SCREEN_BORDER, Config.SCREEN_BORDER);
 
-        smallFont.draw(batch, "Tap green planes to increase score.", 50, Gdx.graphics.getHeight() - 100);
-        smallFont.draw(batch, "Avoid red planes.", 50, Gdx.graphics.getHeight() - 140);
+        shapeDrawer.setColor(0, 1, 0, 1);
+        int currentRadius = circleRadius;
+        for (int i = 0; i < Config.CIRCLES_NUMBER; i++) {
+            shapeDrawer.circle((float) screenCenterX, (float) screenCenterY, currentRadius);
+            currentRadius -= ringWidth;
+        }
 
-
+        headerFont.draw(batch, langBundle.get("game_title"), Config.SCREEN_BORDER, Gdx.graphics.getHeight() - Config.TOP_HEADER_YPOS);
+        smallFont.draw(batch, langBundle.get("tap_green_planes"), Config.SCREEN_BORDER, Gdx.graphics.getHeight() - Config.TOP_LINE1_YPOS);
+        smallFont.draw(batch, langBundle.get("avoid_red_planes"), Config.SCREEN_BORDER, Gdx.graphics.getHeight() - Config.TOP_LINE2_YPOS);
         if (justLaunched) {
             if(Gdx.input.justTouched()) {
                 int inputXPos = Gdx.input.getX();
                 int inputYPos = Gdx.graphics.getHeight() - Gdx.input.getY();
-
-                if (inputXPos >= 50 && inputYPos <= 150) {
+                if (inputXPos >= Config.SCREEN_BORDER && inputYPos <= Config.LINE1_YPOS) {
                     startGame();
+                } else if (inputXPos >= Gdx.graphics.getWidth() - Config.SOUND_AREA_TOUCH_SIZE
+                        && inputYPos >= Gdx.graphics.getHeight() - Config.SOUND_AREA_TOUCH_SIZE) {
+                    soundOn = !soundOn;
                 }
             }
-
-            font.draw(batch, "Welcome to radar game!", 50, 150);
-            font.draw(batch, "Tap here to start.", 50, 100);
+            regularFont.draw(batch, langBundle.get("welcome"), Config.SCREEN_BORDER, Config.LINE1_YPOS);
+            regularFont.draw(batch, langBundle.get("tap_to_start"), Config.SCREEN_BORDER,  Config.LINE2_YPOS);
         }  else {
             if (!gameOver) {
-                font.draw(batch, "Your score: " + score, 50, 150);
-
+                regularFont.draw(batch,
+                        langBundle.format("your_score", score, Config.GROUP_NUMBER * Config.GROUP_SIZE / 2),
+                        Config.SCREEN_BORDER, Config.LINE2_YPOS);
                 for (int i = explodedPlanes.size() - 1; i > -1; i--) {
                     Plane plane = explodedPlanes.get(i);
                     if (TimeUtils.timeSinceNanos(plane.getExplosionTime()) > Config.EXPLOSION_DURATION) {
@@ -216,7 +172,6 @@ public class RadarGame extends ApplicationAdapter {
                         batch.draw(explosionImage, plane.getCurrentXPos() - planeRadius, plane.getCurrentYPos() - planeRadius, planeRadius * 2, planeRadius * 2);
                     }
                 }
-
                 for (int i = currentGroupIndex; i < planeGroups.size(); i++) {
                     PlaneGroup planeGroup = planeGroups.get(i);
                     int level = planeGroup.getLevel();
@@ -231,18 +186,25 @@ public class RadarGame extends ApplicationAdapter {
                         }
                     }
                 }
-
             } else {
                 if(Gdx.input.justTouched()) {
                     int inputXPos = Gdx.input.getX();
                     int inputYPos = Gdx.graphics.getHeight() - Gdx.input.getY();
 
-                    if (inputXPos >= 50 && inputYPos <= 150) {
+                    if (inputXPos >= Config.SCREEN_BORDER && inputYPos <= Config.LINE1_YPOS) {
                         startGame();
+                    } else if (inputXPos >= Gdx.graphics.getWidth() - Config.SOUND_AREA_TOUCH_SIZE && inputYPos >= Gdx.graphics.getHeight() - Config.SOUND_AREA_TOUCH_SIZE) {
+                        soundOn = !soundOn;
                     }
                 }
-                font.draw(batch, "Game Over! Your score was: " + score, 50, 150);
-                font.draw(batch, "Tap here to restart.", 50, 100);
+                regularFont.draw(batch,
+                        langBundle.get("tap_to_restart"),
+                        Config.SCREEN_BORDER,
+                        Config.LINE2_YPOS);
+                regularFont.draw(batch,
+                                langBundle.format("game_over_and_score", score, Config.GROUP_NUMBER * Config.GROUP_SIZE / 2),
+                                Config.SCREEN_BORDER,
+                                Config.LINE1_YPOS);
             }
         }
         batch.end();
@@ -250,30 +212,108 @@ public class RadarGame extends ApplicationAdapter {
 
     @Override
     public void dispose () {
-        shapeRenderer.dispose();
         batch.dispose();
         redPlaneImage.dispose();
         greenPlaneImage.dispose();
-        font.dispose();
+        regularFont.dispose();
         smallFont.dispose();
     }
 
-    private void startGame()
-    {
+    private void startGame() {
         score = 0;
         gameOver = false;
         justLaunched = false;
-
         planeGroups.clear();
         for (int i = 0; i < Config.GROUP_NUMBER; i++) {
-            PlaneGroup planeGroup = new PlaneGroup(3, angles.size());
+            PlaneGroup planeGroup = new PlaneGroup(Config.GROUP_SIZE, angles.size());
             planeGroup.setLevel(0);
             planeGroups.add(planeGroup);
         }
-
         currentGroupIndex = planeGroups.size() - 1;
-
         startTime = TimeUtils.nanoTime();
         deltaTime = Config.DELTA_TIME;
     }
+
+    private void prepareRingPositionArrays() {
+        int distanceFromCenter = 0;
+        for (int i = 0; i < Config.CIRCLES_NUMBER; i++) {
+            distanceFromCenter = ringWidth * i + ringWidth / 2;
+            ArrayList<PlanePosition> planePositions = new ArrayList<>();
+            for (int j = 0; j < angles.size(); j++) {
+                float planeXPos = screenCenterX +
+                        distanceFromCenter * (float) Math.cos(Math.toRadians(angles.get(j)));
+                float planeYPos = screenCenterY +
+                        distanceFromCenter * (float) Math.sin(Math.toRadians(angles.get(j)));
+                planePositions.add(new PlanePosition(planeXPos, planeYPos));
+            }
+            ringPositionArrays.add(planePositions);
+        }
+        Collections.reverse(ringPositionArrays);
+    }
+
+    private void handleScreenTouch() {
+        int inputXPos = Gdx.input.getX();
+        int inputYPos = Gdx.graphics.getHeight() - Gdx.input.getY();
+
+        if (inputXPos >= Gdx.graphics.getWidth() - Config.SOUND_AREA_TOUCH_SIZE && inputYPos >= Gdx.graphics.getHeight() - Config.SOUND_AREA_TOUCH_SIZE) {
+            soundOn = !soundOn;
+        }
+
+        rect.setPosition(inputXPos, inputYPos);
+        boolean hitFound = false;
+        for (int i = currentGroupIndex; i < planeGroups.size(); i++) {
+            PlaneGroup planeGroup = planeGroups.get(i);
+            int level = planeGroup.getLevel();
+            List<Plane> planes = planeGroup.getPlanes();
+            for (int j = 0; j < planes.size(); j++) {
+                Plane plane = planes.get(j);
+                float planeXPos = ringPositionArrays.get(level).get(plane.getAnglePositionIndex()).getxPos();
+                float planeYPos = ringPositionArrays.get(level).get(plane.getAnglePositionIndex()).getyPos();
+                Rectangle planeRect = new Rectangle(planeXPos - planeRadius,
+                        planeYPos - planeRadius,
+                        2 * planeRadius,
+                        2 * planeRadius);
+                if (planeRect.overlaps(rect)) {
+                    planes.remove(j);
+                    plane.setExplosionTime(TimeUtils.nanoTime());
+                    plane.setCurrentXPos(planeXPos);
+                    plane.setCurrentYPos(planeYPos);
+                    explodedPlanes.add(plane);
+                    if (soundOn) {
+                        shotSound.play();
+                    }
+                    if (plane.getType() == 1) {
+                        score--;
+                    } else {
+                        score++;
+                    }
+                    hitFound = true;
+                    break;
+                }
+            }
+            if (hitFound) break;
+        }
+    }
+
+    private void recalculatePlaneGroups() {
+        for (int i = currentGroupIndex; i < planeGroups.size(); i++) {
+            PlaneGroup planeGroup = planeGroups.get(i);
+            int currentGroupLevel = planeGroup.getLevel();
+            if (currentGroupLevel < ringPositionArrays.size() - 1) {
+                planeGroup.setLevel(currentGroupLevel + 1);
+            } else {
+                planeGroup.getPlanes().clear();
+                if (i == 0) {
+                    gameOver = true;
+                }
+            }
+        }
+    }
+
+    private void prepareFonts() {
+        regularFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),48, Color.WHITE);
+        smallFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),38, Color.LIGHT_GRAY);
+        headerFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),68, Color.RED);
+    }
+
 }
