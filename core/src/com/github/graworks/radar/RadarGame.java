@@ -2,6 +2,7 @@ package com.github.graworks.radar;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
@@ -34,6 +35,7 @@ public class RadarGame extends ApplicationAdapter {
     private Texture soundOffImage;
 
     private Sound shotSound;
+    private Music radarSound;
     private BitmapFont regularFont;
     private BitmapFont smallFont;
     private BitmapFont headerFont;
@@ -67,6 +69,10 @@ public class RadarGame extends ApplicationAdapter {
         redPlaneImage = new Texture("red_plane.png");
         explosionImage = new Texture("explosion.png");
         shotSound = Gdx.audio.newSound(Gdx.files.internal("shot.wav"));
+
+        radarSound = Gdx.audio.newMusic(Gdx.files.internal("radar.wav"));
+       // radarSound.setLooping(true);
+
         soundOnImage = new Texture("sound_on.png");
         soundOffImage = new Texture("sound_off.png");
 
@@ -157,10 +163,24 @@ public class RadarGame extends ApplicationAdapter {
                     soundOn = !soundOn;
                 }
             }
+
+
+
             regularFont.draw(batch, langBundle.get("welcome"), Config.SCREEN_BORDER, Config.LINE1_YPOS);
             regularFont.draw(batch, langBundle.get("tap_to_start"), Config.SCREEN_BORDER,  Config.LINE2_YPOS);
         }  else {
             if (!gameOver) {
+
+                if (soundOn) {
+                    if (!radarSound.isPlaying()) {
+                        radarSound.setLooping(true);
+                        radarSound.play();
+                    }
+                } else {
+                    if (radarSound.isPlaying()) {
+                        radarSound.stop();
+                    }
+                }
                 regularFont.draw(batch,
                         langBundle.format("your_score", score, Config.GROUP_NUMBER * Config.GROUP_SIZE / 2),
                         Config.SCREEN_BORDER, Config.LINE2_YPOS);
@@ -232,6 +252,12 @@ public class RadarGame extends ApplicationAdapter {
         currentGroupIndex = planeGroups.size() - 1;
         startTime = TimeUtils.nanoTime();
         deltaTime = Config.DELTA_TIME;
+
+        if (soundOn) {
+            radarSound.setLooping(true);
+            radarSound.play();
+        }
+
     }
 
     private void prepareRingPositionArrays() {
@@ -305,6 +331,9 @@ public class RadarGame extends ApplicationAdapter {
                 planeGroup.getPlanes().clear();
                 if (i == 0) {
                     gameOver = true;
+                    if (radarSound.isPlaying()) {
+                        radarSound.stop();
+                    }
                 }
             }
         }
