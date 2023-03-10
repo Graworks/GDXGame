@@ -22,7 +22,8 @@ public class FontGenerator {
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal(fontName));
         FreeTypeFontGenerator.FreeTypeFontParameter fontParameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
         float ratio = Gdx.graphics.getWidth() / 960f;
-        fontParameter.size = (int)(size * ratio);
+        //fontParameter.size = (int)(size * ratio);
+        fontParameter.size = size;
         fontParameter.color = color;
         fontParameter.characters = FreeTypeFontGenerator.DEFAULT_CHARS;
         if (languageCharacters.containsKey(lang)) {

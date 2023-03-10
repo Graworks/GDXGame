@@ -109,7 +109,7 @@ public class RadarGame extends ApplicationAdapter {
 
     @Override
     public void render () {
-        Gdx.gl.glClearColor(.25f, .25f, .25f, 1);
+        Gdx.gl.glClearColor(25 / 255.0f, 43 / 255.0f, 21 / 255.0f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         if(!gameOver && !justLaunched) {
@@ -142,7 +142,9 @@ public class RadarGame extends ApplicationAdapter {
                 Gdx.graphics.getHeight() - Config.SCREEN_BORDER * 2,
                    Config.SCREEN_BORDER, Config.SCREEN_BORDER);
 
-        shapeDrawer.setColor(0, 1, 0, 1);
+        shapeDrawer.setDefaultLineWidth(3.0f);
+        shapeDrawer.setColor(148 / 255.0f, 254 / 255.0f, 66 / 255.0f, 1);
+        shapeDrawer.filledCircle((float) screenCenterX, (float) screenCenterY, circleRadius, new Color(43 / 255.0f, 75 / 255.0f, 36 / 255.0f, 1));
         int currentRadius = circleRadius;
         for (int i = 0; i < Config.CIRCLES_NUMBER; i++) {
             shapeDrawer.circle((float) screenCenterX, (float) screenCenterY, currentRadius);
@@ -163,14 +165,10 @@ public class RadarGame extends ApplicationAdapter {
                     soundOn = !soundOn;
                 }
             }
-
-
-
             regularFont.draw(batch, langBundle.get("welcome"), Config.SCREEN_BORDER, Config.LINE1_YPOS);
             regularFont.draw(batch, langBundle.get("tap_to_start"), Config.SCREEN_BORDER,  Config.LINE2_YPOS);
         }  else {
             if (!gameOver) {
-
                 if (soundOn) {
                     if (!radarSound.isPlaying()) {
                         radarSound.setLooping(true);
@@ -340,7 +338,7 @@ public class RadarGame extends ApplicationAdapter {
     }
 
     private void prepareFonts() {
-        regularFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),48, Color.WHITE);
+        regularFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),40, Color.WHITE);
         smallFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),38, Color.LIGHT_GRAY);
         headerFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),68, Color.RED);
     }
