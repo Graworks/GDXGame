@@ -11,6 +11,5 @@ public class AndroidLauncher extends AndroidApplication {
 		super.onCreate(savedInstanceState);
 		AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
 		initialize(new RadarGame(), config);
-		// getString(R.string.russian_symbols);
 	}
 }

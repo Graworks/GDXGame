@@ -21,8 +21,6 @@ public class FontGenerator {
     public static BitmapFont getFont(String fontName, String lang, int size, Color color) {
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal(fontName));
         FreeTypeFontGenerator.FreeTypeFontParameter fontParameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        float ratio = Gdx.graphics.getWidth() / 960f;
-        //fontParameter.size = (int)(size * ratio);
         fontParameter.size = size;
         fontParameter.color = color;
         fontParameter.characters = FreeTypeFontGenerator.DEFAULT_CHARS;
