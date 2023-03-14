@@ -5,16 +5,14 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.TimeUtils;
-
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.github.graworks.radar.utils.FontGenerator;
 
 import java.util.ArrayList;
@@ -55,22 +53,17 @@ public class RadarGame extends ApplicationAdapter {
     private boolean gameOver;
     private int score;
     private List<Integer> angles;
-
-
     private boolean soundOn = true;
-
     private I18NBundle langBundle;
 
     @Override
     public void create () {
-
         greenPlaneImage = new Texture("green_plane.png");
         redPlaneImage = new Texture("red_plane.png");
         explosionImage = new Texture("explosion.png");
         shotSound = Gdx.audio.newSound(Gdx.files.internal("shot.wav"));
 
         radarSound = Gdx.audio.newMusic(Gdx.files.internal("radar.wav"));
-       // radarSound.setLooping(true);
 
         soundOnImage = new Texture("sound_on.png");
         soundOffImage = new Texture("sound_off.png");
@@ -108,7 +101,10 @@ public class RadarGame extends ApplicationAdapter {
 
     @Override
     public void render () {
-        Gdx.gl.glClearColor(25 / 255.0f, 43 / 255.0f, 21 / 255.0f, 1);
+        Gdx.gl.glClearColor(Config.SCREEN_BG_COLOR_RED,
+                            Config.SCREEN_BG_COLOR_GREEN,
+                            Config.SCREEN_BG_COLOR_BLUE,
+                            Config.SCREEN_BG_COLOR_ALPHA);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         if(!gameOver && !justLaunched) {
@@ -142,8 +138,9 @@ public class RadarGame extends ApplicationAdapter {
                    Config.SCREEN_BORDER, Config.SCREEN_BORDER);
 
         shapeDrawer.setDefaultLineWidth(3.0f);
-        shapeDrawer.setColor(148 / 255.0f, 254 / 255.0f, 66 / 255.0f, 1);
-        shapeDrawer.filledCircle((float) screenCenterX, (float) screenCenterY, circleRadius, new Color(43 / 255.0f, 75 / 255.0f, 36 / 255.0f, 1));
+
+        shapeDrawer.setColor(Config.CIRCLE_BORDERS_COLOR);
+        shapeDrawer.filledCircle((float) screenCenterX, (float) screenCenterY, circleRadius, Config.CIRCLE_BG_COLOR);
         int currentRadius = circleRadius;
         for (int i = 0; i < Config.CIRCLES_NUMBER; i++) {
             shapeDrawer.circle((float) screenCenterX, (float) screenCenterY, currentRadius);
@@ -337,8 +334,8 @@ public class RadarGame extends ApplicationAdapter {
     }
 
     private void prepareFonts() {
-        regularFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),40, Color.WHITE);
-        smallFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),38, Color.LIGHT_GRAY);
-        headerFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),68, Color.RED);
+        regularFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),40, Config.REGULAR_FONT_COLOR);
+        smallFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),38, Config.SMALL_FONT_COLOR);
+        headerFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),68, Config.HEADER_FONT_COLOR);
     }
 }

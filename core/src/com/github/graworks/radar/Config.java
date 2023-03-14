@@ -1,5 +1,7 @@
 package com.github.graworks.radar;
 
+import com.badlogic.gdx.graphics.Color;
+
 public class Config {
     // circles and angles constants
     public static final int CIRCLES_NUMBER = 6;
@@ -23,4 +25,15 @@ public class Config {
     public static final int TOP_HEADER_YPOS = 55;
     public static final int TOP_LINE1_YPOS = 125;
     public static final int TOP_LINE2_YPOS = 165;
+
+    // colors
+    public static final float SCREEN_BG_COLOR_RED = 25 / 255.0f;
+    public static final float SCREEN_BG_COLOR_GREEN = 43 / 255.0f;
+    public static final float SCREEN_BG_COLOR_BLUE = 21 / 255.0f;
+    public static final float SCREEN_BG_COLOR_ALPHA = 1;
+    public static final Color CIRCLE_BORDERS_COLOR = new Color(148 / 255.0f, 254 / 255.0f, 66 / 255.0f, 1);
+    public static final Color CIRCLE_BG_COLOR = new Color(43 / 255.0f, 75 / 255.0f, 36 / 255.0f, 1);
+    public static final Color REGULAR_FONT_COLOR = Color.WHITE;
+    public static final Color SMALL_FONT_COLOR = Color.LIGHT_GRAY;
+    public static final Color HEADER_FONT_COLOR = Color.RED;
 }
