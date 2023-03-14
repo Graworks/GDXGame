@@ -9,7 +9,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.TimeUtils;
@@ -259,7 +258,7 @@ public class RadarGame extends ApplicationAdapter {
     }
 
     private void prepareRingPositionArrays() {
-        int distanceFromCenter = 0;
+        int distanceFromCenter;
         for (int i = 0; i < Config.CIRCLES_NUMBER; i++) {
             distanceFromCenter = ringWidth * i + ringWidth / 2;
             ArrayList<PlanePosition> planePositions = new ArrayList<>();
@@ -342,5 +341,4 @@ public class RadarGame extends ApplicationAdapter {
         smallFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),38, Color.LIGHT_GRAY);
         headerFont = FontGenerator.getFont("fonts/Roboto-Regular.ttf", Locale.getDefault().getLanguage(),68, Color.RED);
     }
-
 }
