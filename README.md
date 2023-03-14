@@ -1,4 +1,4 @@
 # RADAR-Game
-Simple game created using LibGDX
+Simple game created using LibGDX: tap on screen to shoot planes.
 
 ![Radar_Screenshot_1](https://user-images.githubusercontent.com/2842164/225004628-1fc9e530-1e11-4c9e-b36d-510ce34c1912.png)
